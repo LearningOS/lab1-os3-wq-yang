@@ -83,7 +83,9 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
-        task0.task_st_time = get_time_us();
+        if task0.task_st_time != usize::MAX {
+            task0.task_st_time = get_time_us();
+        }
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
         drop(inner);
         let mut _unused = TaskContext::zero_init();
@@ -126,7 +128,9 @@ impl TaskManager {
             let mut inner = self.inner.exclusive_access();
             let current = inner.current_task;
             inner.tasks[next].task_status = TaskStatus::Running;
-            inner.tasks[next].task_st_time = get_time_us();
+            if inner.tasks[next].task_st_time != usize::MAX {
+                inner.tasks[next].task_st_time = get_time_us();
+            }
             inner.current_task = next;
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
@@ -149,7 +153,7 @@ impl TaskManager {
     }
 
     fn get_current_task_info(&self) -> TaskControlBlock {
-        let mut inner = self.inner.exclusive_access();
+        let inner = self.inner.exclusive_access();
         let current = inner.current_task;
         inner.tasks[current]
     }
